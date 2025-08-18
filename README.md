@@ -116,7 +116,81 @@
 </details>
 
 
-# 4. Tips
+# 4. 部署指南 (Deployment Guide)
+
+本指南将引导您完成在 Cloudflare Pages 上的全流程部署，并配置 Telegram 作为主要存储。
+
+## 步骤一：前置准备
+
+在开始部署之前，请确保您已准备好以下账号和信息：
+
+1.  **GitHub 账户**：用于 Fork 本项目仓库。
+2.  **Cloudflare 账户**：用于部署应用和使用其服务。
+3.  **Telegram Bot (机器人)**：
+    *   在 Telegram 中搜索 `BotFather`。
+    *   发送 `/newbot` 指令创建一个新的机器人。
+    *   按照提示为您的机器人命名，您将获得一个 **Bot Token** (格式类似于 `123456:ABC-DEF1234ghIkl-zyx57W2v1u123456789`)，请**妥善保管**。
+4.  **Telegram Channel (频道)**：
+    *   创建一个**公开 (Public)** 频道，用于存放上传的文件。
+    *   将您刚刚创建的机器人添加为该频道的**管理员**。
+    *   获取频道的 **Chat ID**。对于公开频道，它就是 `@` 符号后面的频道用户名 (例如 `@my_channel_name`)。
+
+## 步骤二：一键部署到 Cloudflare Pages
+
+准备工作就绪后，您可以开始一键部署。
+
+[![Deploy with Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://dash.cloudflare.com/?to=/:account/pages/new?repoUrl=https://github.com/MarSeventh/CloudFlare-ImgBed)
+
+点击上方按钮，浏览器将跳转到 Cloudflare 仪表盘，并开始部署流程。
+
+## 步骤三：在 Cloudflare 中完成配置
+
+1.  **登录并授权**：
+    *   如果您尚未登录 Cloudflare，请先登录。
+    *   授权 Cloudflare 访问您的 GitHub 账户。
+
+2.  **选择仓库**：
+    *   在 "Create a new Pages site" 页面，系统会自动填入本项目的仓库地址。
+    *   您需要点击 "Fork" 按钮，将该仓库 Fork 到您自己的 GitHub 账户下。
+    *   Fork 成功后，确保已选中您账户下的 `CloudFlare-ImgBed` 仓库，然后点击 "Begin setup"。
+
+3.  **配置构建设置**：
+    *   **Project name**：为您的项目取一个名字，这将成为您网站的二级域名。
+    *   **Production branch**：保持 `main` 不变。
+    *   在 "Build settings" 部分：
+        *   **Framework preset**：选择 `None`。
+        *   **Build command**：填写 `npm install`。
+        *   **Build output directory**：留空或填写 `./`。
+
+4.  **设置环境变量和绑定 (最关键步骤)**：
+    *   展开 "Environment variables (advanced)" 部分。
+    *   点击 "Add variable" 添加以下两个**环境变量**，用于连接 Telegram：
+        *   `TG_BOT_TOKEN`：粘贴您在步骤一中获取的 Bot Token。
+        *   `TG_CHAT_ID`：填写您在步骤一中获取的频道 Chat ID (例如 `@my_channel_name`)。
+    *   接下来，配置**服务绑定 (Bindings)**，这是系统运行所必需的。
+    *   **KV Namespace Bindings**:
+        *   点击 "Add binding"。
+        *   **Variable name**: `img_url`
+        *   **KV namespace**: 点击下拉菜单，选择 "Create a new namespace"，输入一个名称（例如 `img_url_kv`）并创建。
+    *   **R2 Bucket Bindings**:
+        *   点击 "Add binding"。
+        *   **Variable name**: `img_r2`
+        *   **R2 bucket**: 点击下拉菜单，选择 "Create a new bucket"，输入一个名称（例如 `img-r2-bucket`）并创建。
+        *   *注意：即使主要使用 Telegram，绑定 KV 和 R2 也是推荐的最佳实践，以确保所有功能正常并为未来提供灵活性。*
+
+5.  **开始部署**：
+    *   检查所有配置无误后，点击页面底部的 **"Save and Deploy"** 按钮。
+    *   Cloudflare 将开始拉取代码、构建并部署您的应用。您可以实时查看部署日志。
+
+## 步骤四：部署后初始化
+
+*   部署成功后，Cloudflare 会提供给您一个访问域名 (例如 `your-project-name.pages.dev`)。
+*   首次访问该域名，系统会引导您进入管理后台进行初始化设置，例如设置管理员密码等。
+*   完成初始化后，您就可以开始上传和管理您的文件了！
+
+---
+
+# 5. Tips
 
 - **前端开源**：参见[MarSeventh/Sanyue-ImgHub](https://github.com/MarSeventh/Sanyue-ImgHub)项目。
 
