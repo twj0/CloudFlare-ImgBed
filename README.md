@@ -172,11 +172,14 @@
         *   点击 "Add binding"。
         *   **Variable name**: `img_url`
         *   **KV namespace**: 点击下拉菜单，选择 "Create a new namespace"，输入一个名称（例如 `img_url_kv`）并创建。
+        *   > [!IMPORTANT]
+        *   > **KV 绑定是必需的！** 应用的所有系统配置（如管理员密码、站点设置等）都存储在 KV 中。**若不绑定，应用将完全无法运行。**
     *   **R2 Bucket Bindings**:
         *   点击 "Add binding"。
         *   **Variable name**: `img_r2`
         *   **R2 bucket**: 点击下拉菜单，选择 "Create a new bucket"，输入一个名称（例如 `img-r2-bucket`）并创建。
-        *   *注意：即使主要使用 Telegram，绑定 KV 和 R2 也是推荐的最佳实践，以确保所有功能正常并为未来提供灵活性。*
+        *   > [!NOTE]
+        *   > **R2 绑定是可选的。** 如果您不打算使用 Cloudflare R2 作为存储方式，可以不进行此项绑定。但为了功能的完整性和未来的扩展性，我们强烈建议您绑定。
 
 5.  **开始部署**：
     *   检查所有配置无误后，点击页面底部的 **"Save and Deploy"** 按钮。
