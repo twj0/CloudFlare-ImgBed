@@ -58,7 +58,62 @@
           </div>
         </div>
       </div>
-      
+
+      <!-- 标签和收藏夹 -->
+      <div class="tags-favorites-section">
+        <FileTagSelector
+          :selected-files="[selectedFile]"
+          :current-file="selectedFile"
+          :show-stats="false"
+          @tags-changed="handleTagsChanged"
+        />
+
+        <div class="favorite-actions">
+          <h4 class="section-subtitle">收藏夹</h4>
+          <div class="favorite-buttons">
+            <el-button
+              v-if="!selectedFile.isFavorite"
+              type="success"
+              size="small"
+              @click="addToFavorites"
+              :icon="Star"
+              :loading="favoriteLoading"
+            >
+              添加到收藏夹
+            </el-button>
+            <el-button
+              v-else
+              type="warning"
+              size="small"
+              @click="removeFromFavorites"
+              :icon="StarFilled"
+              :loading="favoriteLoading"
+            >
+              已收藏
+            </el-button>
+            <el-dropdown @command="handleFavoriteGroupAction" v-if="favoriteGroups.length > 1">
+              <el-button size="small" :icon="ArrowDown">
+                选择分组
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    v-for="group in favoriteGroups"
+                    :key="group.id"
+                    :command="group.id"
+                  >
+                    <el-icon :color="group.color">
+                      <component :is="getIconComponent(group.icon)" />
+                    </el-icon>
+                    {{ group.name }}
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+      </div>
+
       <!-- 操作按钮 */
       <div class="actions-section">
         <h3 class="section-title">操作</h3>
@@ -114,7 +169,16 @@
           <span>{{ totalSize }}</span>
         </div>
       </div>
-      
+
+      <!-- 批量标签和收藏夹 -->
+      <div class="batch-tags-favorites">
+        <FileTagSelector
+          :selected-files="selectedFiles"
+          :show-stats="false"
+          @batch-operation-complete="handleBatchOperationComplete"
+        />
+      </div>
+
       <!-- 批量操作 -->
       <div class="batch-actions">
         <h3 class="section-title">批量操作</h3>
@@ -124,6 +188,9 @@
           </el-button>
           <el-button @click="handleBatchMove" :icon="FolderOpened" block>
             移动到...
+          </el-button>
+          <el-button @click="handleBatchAddToFavorites" :icon="Star" block>
+            批量收藏
           </el-button>
           <el-button type="danger" @click="handleBatchDelete" :icon="Delete" block>
             批量删除
@@ -142,12 +209,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { 
+import {
   Download, Link, Edit, Delete, View, Files, FolderOpened, Document,
-  Folder, Picture, VideoPlay, Headphone
+  Folder, Picture, VideoPlay, Headphone, Star, StarFilled, ArrowDown
 } from '@element-plus/icons-vue';
+import FileTagSelector from './FileTagSelector.vue';
+import {
+  addToFavorites as addToFavoritesAPI,
+  removeFromFavorites as removeFromFavoritesAPI,
+  getFavoriteGroups,
+  batchAddToFavorites
+} from '@/utils/fileManagerAPI';
+import { FAVORITE_ICONS } from '@/models/fileManagerModels';
 
 // Props
 const props = defineProps({
@@ -162,7 +237,11 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['file-action']);
+const emit = defineEmits(['file-action', 'tags-changed', 'favorites-changed']);
+
+// 响应式数据
+const favoriteLoading = ref(false);
+const favoriteGroups = ref([]);
 
 // 计算属性
 const folderCount = computed(() => {
@@ -361,6 +440,133 @@ const handleBatchDelete = async () => {
 const handleImageError = (event) => {
   event.target.style.display = 'none';
 };
+
+// 标签和收藏夹相关方法
+const handleTagsChanged = (file, tags) => {
+  emit('tags-changed', file, tags);
+};
+
+const addToFavorites = async () => {
+  if (!props.selectedFile) return;
+
+  favoriteLoading.value = true;
+  try {
+    const success = await addToFavoritesAPI(props.selectedFile.name);
+    if (success) {
+      props.selectedFile.isFavorite = true;
+      emit('favorites-changed', props.selectedFile, true);
+    }
+  } catch (error) {
+    console.error('Add to favorites failed:', error);
+  } finally {
+    favoriteLoading.value = false;
+  }
+};
+
+const removeFromFavorites = async () => {
+  if (!props.selectedFile) return;
+
+  favoriteLoading.value = true;
+  try {
+    const success = await removeFromFavoritesAPI(props.selectedFile.name);
+    if (success) {
+      props.selectedFile.isFavorite = false;
+      emit('favorites-changed', props.selectedFile, false);
+    }
+  } catch (error) {
+    console.error('Remove from favorites failed:', error);
+  } finally {
+    favoriteLoading.value = false;
+  }
+};
+
+const handleFavoriteGroupAction = async (groupId) => {
+  if (!props.selectedFile) return;
+
+  favoriteLoading.value = true;
+  try {
+    const success = await addToFavoritesAPI(props.selectedFile.name, groupId);
+    if (success) {
+      props.selectedFile.isFavorite = true;
+      if (!props.selectedFile.favoriteGroups) {
+        props.selectedFile.favoriteGroups = [];
+      }
+      if (!props.selectedFile.favoriteGroups.includes(groupId)) {
+        props.selectedFile.favoriteGroups.push(groupId);
+      }
+      emit('favorites-changed', props.selectedFile, true);
+    }
+  } catch (error) {
+    console.error('Add to favorite group failed:', error);
+  } finally {
+    favoriteLoading.value = false;
+  }
+};
+
+const handleBatchAddToFavorites = async () => {
+  if (props.selectedFiles.length === 0) return;
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要将选中的 ${props.selectedFiles.length} 个文件添加到收藏夹吗？`,
+      '批量收藏确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }
+    );
+
+    const fileIds = props.selectedFiles.map(file => file.name);
+    const result = await batchAddToFavorites(fileIds);
+
+    if (result.success) {
+      // 更新文件的收藏状态
+      props.selectedFiles.forEach(file => {
+        file.isFavorite = true;
+      });
+      emit('favorites-changed', props.selectedFiles, true);
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('Batch add to favorites failed:', error);
+    }
+  }
+};
+
+const handleBatchOperationComplete = (operation, result) => {
+  emit('file-action', `batch-${operation}`, result);
+};
+
+const loadFavoriteGroups = async () => {
+  try {
+    const groups = await getFavoriteGroups();
+    favoriteGroups.value = groups;
+  } catch (error) {
+    console.error('Load favorite groups failed:', error);
+  }
+};
+
+const getIconComponent = (iconName) => {
+  const iconComponents = {
+    star: Star,
+    heart: StarFilled,
+    bookmark: Document,
+    flag: FolderOpened,
+    folder: Folder,
+    image: Picture,
+    video: VideoPlay,
+    document: Document,
+    music: Headphone,
+    archive: Files
+  };
+  return iconComponents[iconName] || Star;
+};
+
+// 生命周期
+onMounted(() => {
+  loadFavoriteGroups();
+});
 </script>
 
 <style scoped>
@@ -568,5 +774,39 @@ const handleImageError = (event) => {
 
 .file-icon {
   color: var(--el-text-color-secondary);
+}
+
+/* 标签和收藏夹区域 */
+.tags-favorites-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
+}
+
+.section-subtitle {
+  margin: 16px 0 8px 0;
+  color: var(--el-text-color-regular);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.favorite-actions {
+  margin-top: 16px;
+}
+
+.favorite-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.batch-tags-favorites {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
 }
 </style>
