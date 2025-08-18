@@ -28,6 +28,14 @@
                         <font-awesome-icon icon="cogs" style="margin-right: 5px;"></font-awesome-icon>
                         系统设置
                     </el-dropdown-item>
+                    <el-dropdown-item command="file-manager" v-if="activeTab !== 'file-manager'">
+                        <font-awesome-icon icon="folder-open" style="margin-right: 5px;"></font-awesome-icon>
+                        文件管理
+                    </el-dropdown-item>
+                    <el-dropdown-item command="file-management" v-if="activeTab !== 'file-management'">
+                        <font-awesome-icon icon="tasks" style="margin-right: 5px;"></font-awesome-icon>
+                        高级管理
+                    </el-dropdown-item>
                     <el-dropdown-item command="">
                         <font-awesome-icon icon="upload" style="margin-right: 5px;"></font-awesome-icon>
                         上传页面
@@ -61,6 +69,10 @@ export default {
                 return '用户管理';
             } else if (this.activeTab === 'systemConfig') {
                 return '系统设置';
+            } else if (this.activeTab === 'file-manager') {
+                return '文件管理';
+            } else if (this.activeTab === 'file-management') {
+                return '高级管理';
             } else {
                 return '上传页面';
             }
@@ -72,6 +84,10 @@ export default {
                 return 'user-cog';
             } else if (this.activeTab === 'systemConfig') {
                 return 'cogs';
+            } else if (this.activeTab === 'file-manager') {
+                return 'folder-open';
+            } else if (this.activeTab === 'file-management') {
+                return 'tasks';
             } else {
                 return 'upload';
             }
