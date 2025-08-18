@@ -31,6 +31,11 @@
                     <font-awesome-icon icon="link" class="link-icon" size="lg"/>
                 </el-button>
             </el-tooltip>
+            <el-tooltip :disabled="disableTooltip" content="文件管理" placement="left">
+                <el-button class="toolbar-button file-manager-button" :class="{ 'active': isToolBarOpen}" size="large" @click="handleFileManager" circle>
+                    <font-awesome-icon icon="folder" class="file-manager-icon" size="lg"/>
+                </el-button>
+            </el-tooltip>
             <el-tooltip :disabled="disableTooltip" content="管理页面" placement="left">
                 <el-button class="toolbar-button config-button" :class="{ 'active': isToolBarOpen}" size="large" @click="handleManage" circle>
                     <font-awesome-icon icon="cog" class="config-icon" size="lg"/>
@@ -345,6 +350,9 @@ export default {
         handleManage() {
             this.$router.push('/dashboard')
         },
+        handleFileManager() {
+            this.$router.push('/file-manager')
+        },
         openUrlDialog() {
             this.showUrlDialog = true
         },
@@ -650,6 +658,19 @@ export default {
     opacity: 1;
 }
 
+.file-manager-button {
+    position: fixed;
+    bottom: 50px;
+    right: 30px;
+    opacity: 0;
+    transition: all 0.3s ease, transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    pointer-events: none;
+}
+.file-manager-button.active {
+    transform: translateY(-58px) translateX(-50px);
+    opacity: 1;
+}
+
 .config-button {
     position: fixed;
     bottom: 50px;
@@ -682,6 +703,9 @@ export default {
         transform: translateY(-77px);
     }
     .link-button:hover {
+        transform: translateY(-60px) translateX(-52px);
+    }
+    .file-manager-button:hover {
         transform: translateY(-60px) translateX(-52px);
     }
     .config-button:hover {

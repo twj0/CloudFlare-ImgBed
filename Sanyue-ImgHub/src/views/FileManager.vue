@@ -489,9 +489,15 @@ watch(currentPath, (newPath) => {
 .modern-file-manager {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
-  height: 100vh;
-  background: var(--el-bg-color);
+  height: 95vh; /* 留出一些边距 */
+  width: 95vw; /* 留出一些边距 */
+  margin: 2.5vh auto; /* 居中 */
+  background: var(--el-bg-color-page);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-radius: 12px; /* macOS 风格圆角 */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* 窗口阴影 */
+  overflow: hidden; /* 确保子元素不会超出圆角 */
+  border: 1px solid var(--el-border-color-lighter);
 }
 
 /* 顶部工具栏 */
@@ -500,9 +506,9 @@ watch(currentPath, (newPath) => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--el-bg-color-page);
+  background: rgba(245, 245, 247, 0.7); /* 半透明背景 */
+  backdrop-filter: blur(12px); /* 毛玻璃效果 */
   border-bottom: 1px solid var(--el-border-color-light);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .toolbar-left {
@@ -574,8 +580,9 @@ watch(currentPath, (newPath) => {
 
 /* 侧边栏 */
 .sidebar {
-  width: 280px;
-  background: var(--el-bg-color-page);
+  width: 240px; /* 稍微窄一点 */
+  background: rgba(245, 245, 247, 0.7); /* 半透明背景 */
+  backdrop-filter: blur(12px); /* 毛玻璃效果 */
   border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
@@ -638,8 +645,9 @@ watch(currentPath, (newPath) => {
 }
 
 .quick-list li.active {
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  background: #007aff; /* macOS 风格的蓝色 */
+  color: white;
+  font-weight: 500;
 }
 
 .folder-tree {
@@ -760,7 +768,7 @@ watch(currentPath, (newPath) => {
 }
 
 .dark .file-manager-toolbar {
-  background: var(--el-bg-color-page);
+  background: rgba(43, 43, 43, 0.7);
   border-bottom-color: var(--el-border-color);
 }
 
@@ -770,8 +778,12 @@ watch(currentPath, (newPath) => {
 }
 
 .dark .sidebar {
-  background: var(--el-bg-color-page);
+  background: rgba(43, 43, 43, 0.7);
   border-right-color: var(--el-border-color);
+}
+
+.dark .quick-list li.active {
+  background: #0a84ff;
 }
 
 .dark .properties-panel {
