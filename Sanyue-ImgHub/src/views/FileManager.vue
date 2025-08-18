@@ -489,15 +489,13 @@ watch(currentPath, (newPath) => {
 .modern-file-manager {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
-  height: 95vh; /* 留出一些边距 */
-  width: 95vw; /* 留出一些边距 */
-  margin: 2.5vh auto; /* 居中 */
-  background: var(--el-bg-color-page);
+  height: 100%; /* 填充父容器 */
+  width: 100%;
+  margin: 0;
+  background: transparent; /* 透明背景 */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  border-radius: 12px; /* macOS 风格圆角 */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); /* 窗口阴影 */
-  overflow: hidden; /* 确保子元素不会超出圆角 */
-  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* 顶部工具栏 */
@@ -506,8 +504,7 @@ watch(currentPath, (newPath) => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: rgba(245, 245, 247, 0.7); /* 半透明背景 */
-  backdrop-filter: blur(12px); /* 毛玻璃效果 */
+  background: var(--el-bg-color-page);
   border-bottom: 1px solid var(--el-border-color-light);
 }
 
@@ -580,9 +577,8 @@ watch(currentPath, (newPath) => {
 
 /* 侧边栏 */
 .sidebar {
-  width: 240px; /* 稍微窄一点 */
-  background: rgba(245, 245, 247, 0.7); /* 半透明背景 */
-  backdrop-filter: blur(12px); /* 毛玻璃效果 */
+  width: 280px;
+  background: var(--el-bg-color-page);
   border-right: 1px solid var(--el-border-color-light);
   display: flex;
   flex-direction: column;
@@ -645,9 +641,8 @@ watch(currentPath, (newPath) => {
 }
 
 .quick-list li.active {
-  background: #007aff; /* macOS 风格的蓝色 */
-  color: white;
-  font-weight: 500;
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 
 .folder-tree {
@@ -768,7 +763,7 @@ watch(currentPath, (newPath) => {
 }
 
 .dark .file-manager-toolbar {
-  background: rgba(43, 43, 43, 0.7);
+  background: var(--el-bg-color-page);
   border-bottom-color: var(--el-border-color);
 }
 
@@ -778,12 +773,8 @@ watch(currentPath, (newPath) => {
 }
 
 .dark .sidebar {
-  background: rgba(43, 43, 43, 0.7);
+  background: var(--el-bg-color-page);
   border-right-color: var(--el-border-color);
-}
-
-.dark .quick-list li.active {
-  background: #0a84ff;
 }
 
 .dark .properties-panel {

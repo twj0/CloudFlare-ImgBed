@@ -1,13 +1,19 @@
 <template>
-  <router-view/>
+  <div :class="wrapperClass">
+    <router-view/>
+  </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
+import './styles/global.css';
 
 export default {
   computed: {
-    ...mapGetters(['userConfig', 'useDarkMode'])
+    ...mapGetters(['userConfig', 'useDarkMode']),
+    wrapperClass() {
+      return this.$route.name === 'fileManager' ? 'file-manager-wrapper' : '';
+    }
   },
   watch: {
     useDarkMode() {
