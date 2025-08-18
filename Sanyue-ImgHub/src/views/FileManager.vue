@@ -1,4 +1,5 @@
 <template>
+<div class="file-manager-wrapper">
   <!-- 移动端版本 -->
   <MobileFileManager
     v-if="isMobile"
@@ -196,6 +197,7 @@
       @item-click="handleContextMenuClick"
     />
   </div>
+</div>
 </template>
 
 <script setup>
@@ -486,16 +488,29 @@ watch(currentPath, (newPath) => {
 </script>
 
 <style scoped>
+.file-manager-wrapper {
+  padding: 2.5vh 2.5vw;
+  background-color: #f0f2f5;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dark .file-manager-wrapper {
+    background-color: #1a1a1a;
+}
+
 .modern-file-manager {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
-  height: 100%; /* 填充父容器 */
+  height: 100%;
   width: 100%;
   margin: 0;
-  background: transparent; /* 透明背景 */
+  background: var(--el-bg-color-page);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
 }
 
 /* 顶部工具栏 */
