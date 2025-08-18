@@ -79,6 +79,12 @@ const routes = [
     beforeEnter: adminAuthGuard
   },
   {
+    path: '/file-management',
+    name: 'fileManagement',
+    component: () => import('../views/FileManagement.vue'),
+    beforeEnter: adminAuthGuard
+  },
+  {
     path: '/customerConfig',
     name: 'customerConfig',
     component: () => import('../views/CustomerConfig.vue'),

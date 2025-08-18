@@ -135,7 +135,64 @@
           </el-button>
         </div>
       </div>
-      
+
+      <!-- 版本历史 -->
+      <div class="versions-section" v-if="fileVersions.length > 1">
+        <h3 class="section-title">版本历史</h3>
+        <div class="version-summary">
+          <div class="version-info">
+            <span class="current-version">当前版本: v{{ currentVersion }}</span>
+            <span class="total-versions">共 {{ fileVersions.length }} 个版本</span>
+          </div>
+          <el-button
+            type="text"
+            size="small"
+            @click="showVersionHistory = true"
+            :icon="Clock"
+          >
+            查看历史
+          </el-button>
+        </div>
+      </div>
+
+      <!-- 文件统计 -->
+      <div class="stats-section" v-if="fileStats">
+        <h3 class="section-title">访问统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-icon">
+              <el-icon color="#409EFF"><View /></el-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">{{ fileStats.viewCount || 0 }}</span>
+              <span class="stat-label">访问量</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">
+              <el-icon color="#67C23A"><Download /></el-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">{{ fileStats.downloadCount || 0 }}</span>
+              <span class="stat-label">下载量</span>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-icon">
+              <el-icon color="#E6A23C"><Share /></el-icon>
+            </div>
+            <div class="stat-content">
+              <span class="stat-value">{{ fileStats.shareCount || 0 }}</span>
+              <span class="stat-label">分享量</span>
+            </div>
+          </div>
+        </div>
+        <div class="last-accessed" v-if="fileStats.lastAccessed">
+          <span class="label">最后访问：</span>
+          <span class="value">{{ formatDate(fileStats.lastAccessed) }}</span>
+        </div>
+      </div>
+
       <!-- 元数据信息 -->
       <div v-if="selectedFile.metadata" class="metadata-section">
         <h3 class="section-title">详细信息</h3>
@@ -170,12 +227,13 @@
         </div>
       </div>
 
-      <!-- 批量标签和收藏夹 -->
-      <div class="batch-tags-favorites">
-        <FileTagSelector
+      <!-- 批量操作 -->
+      <div class="batch-operations">
+        <EnhancedBatchOperations
           :selected-files="selectedFiles"
-          :show-stats="false"
-          @batch-operation-complete="handleBatchOperationComplete"
+          @clear-selection="$emit('file-action', 'clear-selection')"
+          @operation-complete="handleBatchOperationComplete"
+          @refresh="$emit('file-action', 'refresh')"
         />
       </div>
 
@@ -209,18 +267,24 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   Download, Link, Edit, Delete, View, Files, FolderOpened, Document,
-  Folder, Picture, VideoPlay, Headphone, Star, StarFilled, ArrowDown
+  Folder, Picture, VideoPlay, Headphone, Star, StarFilled, ArrowDown,
+  Clock, Share
 } from '@element-plus/icons-vue';
 import FileTagSelector from './FileTagSelector.vue';
+import FileVersionHistory from './FileVersionHistory.vue';
+import EnhancedFilePreview from './EnhancedFilePreview.vue';
+import EnhancedBatchOperations from './EnhancedBatchOperations.vue';
 import {
   addToFavorites as addToFavoritesAPI,
   removeFromFavorites as removeFromFavoritesAPI,
   getFavoriteGroups,
-  batchAddToFavorites
+  batchAddToFavorites,
+  getFileVersions,
+  getFileStats
 } from '@/utils/fileManagerAPI';
 import { FAVORITE_ICONS } from '@/models/fileManagerModels';
 
@@ -242,6 +306,14 @@ const emit = defineEmits(['file-action', 'tags-changed', 'favorites-changed']);
 // 响应式数据
 const favoriteLoading = ref(false);
 const favoriteGroups = ref([]);
+const showVersionHistory = ref(false);
+const showEnhancedPreview = ref(false);
+const previewFile = ref(null);
+const fileVersions = ref([]);
+const currentVersion = ref(1);
+const fileStats = ref(null);
+const fileFavoriteGroups = ref([]);
+const isInFavorites = ref(false);
 
 // 计算属性
 const folderCount = computed(() => {
@@ -390,7 +462,21 @@ const handleRename = () => {
 };
 
 const handlePreview = () => {
-  emit('file-action', 'preview', props.selectedFile);
+  if (props.selectedFile) {
+    previewFile.value = {
+      name: props.selectedFile.name,
+      url: props.selectedFile.url,
+      fileType: props.selectedFile.fileType || getFileTypeFromName(props.selectedFile.name),
+      size: props.selectedFile.size
+    };
+    showEnhancedPreview.value = true;
+  }
+};
+
+const handlePreviewDownload = (file) => {
+  if (file && file.url) {
+    window.open(file.url, '_blank');
+  }
 };
 
 const handleDelete = async () => {
@@ -561,6 +647,113 @@ const getIconComponent = (iconName) => {
     archive: Files
   };
   return iconComponents[iconName] || Star;
+};
+
+// 版本历史相关方法
+const loadFileVersions = async (file) => {
+  if (!file) return;
+
+  try {
+    const versions = await getFileVersions(file.name);
+    fileVersions.value = versions;
+
+    // 找到当前版本
+    const activeVersion = versions.find(v => v.isActive);
+    currentVersion.value = activeVersion ? activeVersion.versionNumber : 1;
+  } catch (error) {
+    console.error('Load file versions failed:', error);
+    fileVersions.value = [];
+  }
+};
+
+const handleVersionRestored = (version) => {
+  ElMessage.success(`已恢复到版本 v${version.versionNumber}`);
+  loadFileVersions(props.selectedFile);
+  emit('file-action', 'refresh');
+};
+
+const handleVersionDeleted = (version) => {
+  ElMessage.success(`版本 v${version.versionNumber} 已删除`);
+  loadFileVersions(props.selectedFile);
+};
+
+// 统计数据相关方法
+const loadFileStats = async (file) => {
+  if (!file) return;
+
+  try {
+    const stats = await getFileStats({ fileId: file.name });
+    fileStats.value = stats;
+  } catch (error) {
+    console.error('Load file stats failed:', error);
+    fileStats.value = null;
+  }
+};
+
+// 工具方法
+const getFileTypeFromName = (fileName) => {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  const typeMap = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'mp4': 'video/mp4',
+    'avi': 'video/avi',
+    'mov': 'video/quicktime',
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'pdf': 'application/pdf',
+    'txt': 'text/plain',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  };
+  return typeMap[ext] || 'application/octet-stream';
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '从未';
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN');
+};
+
+// 监听器
+watch(() => props.selectedFile, (newFile) => {
+  if (newFile && newFile.type === 'file') {
+    loadFileVersions(newFile);
+    loadFileStats(newFile);
+
+    // 检查收藏状态
+    isInFavorites.value = newFile.isFavorite || false;
+    fileFavoriteGroups.value = newFile.favoriteGroups || [];
+  } else {
+    fileVersions.value = [];
+    fileStats.value = null;
+    isInFavorites.value = false;
+    fileFavoriteGroups.value = [];
+  }
+}, { immediate: true });
+
+// 批量操作处理
+const handleBatchOperationComplete = (operation, result) => {
+  const operationNames = {
+    'tags': '标签',
+    'favorites': '收藏夹',
+    'rename': '重命名',
+    'compress': '压缩',
+    'permissions': '权限设置',
+    'delete': '删除'
+  };
+
+  const operationName = operationNames[operation] || operation;
+  ElMessage.success(`批量${operationName}操作完成`);
+  emit('file-action', 'refresh');
+};
+
+const handleTagsChanged = () => {
+  // 标签变化后刷新文件列表
+  emit('file-action', 'refresh');
 };
 
 // 生命周期
@@ -802,11 +995,102 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.batch-tags-favorites {
+.batch-operations {
   margin-bottom: 24px;
   padding: 16px;
   background: var(--el-bg-color);
   border-radius: 8px;
   border: 1px solid var(--el-border-color-light);
+}
+
+.versions-section {
+  margin-bottom: 20px;
+}
+
+.version-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--el-fill-color-light);
+  border-radius: 6px;
+}
+
+.version-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.current-version {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+
+.total-versions {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+}
+
+.stats-section {
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--el-fill-color-light);
+  border-radius: 6px;
+}
+
+.stat-icon {
+  flex-shrink: 0;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  margin-top: 2px;
+}
+
+.last-accessed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.last-accessed .label {
+  color: var(--el-text-color-regular);
+}
+
+.last-accessed .value {
+  color: var(--el-text-color-primary);
+  font-weight: 500;
 }
 </style>
