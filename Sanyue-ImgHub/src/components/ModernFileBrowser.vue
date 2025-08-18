@@ -115,41 +115,34 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
-import { 
+import {
   Loading, FolderOpened, Folder, Document, Picture, VideoPlay,
   Headphone, Files, View, Download, Link
 } from '@element-plus/icons-vue';
 import axios from '@/utils/axios';
 
-// Props
+// Vuex
+const store = useStore();
+
+// Props (只保留非 Vuex 管理的状态)
 const props = defineProps({
-  directory: {
-    type: String,
-    default: ''
-  },
-  viewMode: {
-    type: String,
-    default: 'list',
-    validator: (value) => ['list', 'grid', 'detail'].includes(value)
-  },
   searchQuery: {
     type: String,
     default: ''
-  },
-  sortBy: {
-    type: String,
-    default: 'name'
-  },
-  sortOrder: {
-    type: String,
-    default: 'asc'
   }
 });
 
 // Emits
-const emit = defineEmits(['file-selected', 'selection-changed', 'item-double-click']);
+const emit = defineEmits(['item-double-click']);
+
+// 从 Vuex 获取状态
+const currentPath = computed(() => store.getters['fileManager/currentPath']);
+const viewMode = computed(() => store.getters['fileManager/viewMode']);
+const sortBy = computed(() => store.getters['fileManager/sortField']);
+const sortOrder = computed(() => store.getters['fileManager/sortOrder']);
 
 // 响应式数据
 const loading = ref(false);
@@ -170,8 +163,8 @@ const filteredItems = computed(() => {
   
   // 排序
   filtered.sort((a, b) => {
-    let aValue = a[props.sortBy];
-    let bValue = b[props.sortBy];
+    let aValue = a[sortBy.value];
+    let bValue = b[sortBy.value];
     
     // 文件夹优先
     if (a.type === 'directory' && b.type !== 'directory') return -1;
@@ -184,7 +177,7 @@ const filteredItems = computed(() => {
     }
     
     const result = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    return props.sortOrder === 'asc' ? result : -result;
+    return sortOrder.value === 'asc' ? result : -result;
   });
   
   return filtered;
@@ -296,7 +289,7 @@ const formatFileSize = (size) => {
 // 事件处理
 const handleSelectionChange = (selection) => {
   selectedItems.value = selection.map(item => item.id);
-  emit('selection-changed', selection);
+  store.dispatch('fileManager/updateSelection', selection);
 };
 
 const handleItemClick = (item, event) => {
@@ -311,8 +304,11 @@ const handleItemClick = (item, event) => {
   } else {
     // 单选
     selectedItems.value = [item.id];
-    emit('file-selected', item);
+    store.dispatch('fileManager/updateSelection', [item]);
   }
+  // 通知父组件更新多选状态
+  const selection = items.value.filter(i => selectedItems.value.includes(i.id));
+  store.dispatch('fileManager/updateSelection', selection);
 };
 
 const handleDoubleClick = (item) => {
@@ -347,12 +343,13 @@ const handleImageError = (event) => {
 
 // 刷新方法
 const refresh = () => {
-  fetchData(props.directory);
+  fetchData(currentPath.value);
 };
 
 // 监听器
-watch(() => props.directory, (newDir) => {
-  fetchData(newDir);
+// 监听多个源 (路径, 排序) 的变化，一旦变化就重新获取数据
+watch([currentPath, sortBy, sortOrder], () => {
+  fetchData(currentPath.value);
 }, { immediate: true });
 
 // 暴露方法

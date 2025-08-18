@@ -19,15 +19,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useStore } from 'vuex';
 import axios from 'axios'; // 假设项目中已配置好 axios
 import { ElMessage } from 'element-plus';
 import { Folder } from '@element-plus/icons-vue';
 
 const treeRef = ref(null);
+const store = useStore();
 
-// 定义 props 和 emits
-const emit = defineEmits(['directory-selected']);
+// 从 Vuex 获取当前路径
+const currentPath = computed(() => store.getters['fileManager/currentPath']);
 
 // el-tree 的配置
 const treeProps = {
@@ -85,8 +87,8 @@ const loadNode = async (node, resolve) => {
  * @param {object} data - 点击节点所代表的数据
  */
 const handleNodeClick = (data) => {
-  // 通过 emit 将选中的目录路径传递给父组件
-  emit('directory-selected', data.path);
+  // 直接 dispatch action 来改变路径
+  store.dispatch('fileManager/navigateTo', data.path);
 };
 
 const refresh = () => {
@@ -98,6 +100,14 @@ const refresh = () => {
     rootNode.expand();
   }
 };
+
+// 监听来自 store 的 currentPath 变化，并更新 tree 的选中状态
+watch(currentPath, (newPath) => {
+  if (treeRef.value) {
+    // el-tree 的 setCurrentKey 需要一个唯一的 key，我们这里用 path
+    treeRef.value.setCurrentKey(newPath);
+  }
+});
 
 // 暴露方法给父组件
 defineExpose({

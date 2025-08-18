@@ -136,7 +136,6 @@
           <DirectoryTree
             ref="directoryTreeRef"
             @directory-selected="onDirectorySelected"
-            :current-path="currentPath"
           />
         </div>
       </aside>
@@ -145,13 +144,8 @@
       <section class="content-area">
         <ModernFileBrowser
           ref="fileBrowserRef"
-          :directory="currentPath"
-          :view-mode="viewMode"
           :search-query="searchQuery"
-          :sort-by="sortField"
-          :sort-order="sortOrder"
-          @file-selected="onFileSelected"
-          @selection-changed="onSelectionChanged"
+          @item-double-click="onItemDoubleClick"
         />
       </section>
 
@@ -205,7 +199,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
+import { useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
 import {
   ArrowLeft, ArrowRight, Top, Upload, FolderAdd, Refresh,
@@ -221,30 +216,30 @@ import FileManagerDialogs from '@/components/FileManagerDialogs.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MobileFileManager from '@/components/MobileFileManager.vue';
 
-// 响应式数据
-const currentPath = ref('');
-const viewMode = ref('list'); // 'list', 'grid', 'detail'
+// Vuex store
+const store = useStore();
+
+// 从 Vuex getters 获取状态
+const currentPath = computed(() => store.getters['fileManager/currentPath']);
+const viewMode = computed({
+  get: () => store.getters['fileManager/viewMode'],
+  set: (value) => store.commit('fileManager/SET_VIEW_MODE', value),
+});
+const sortField = computed(() => store.getters['fileManager/sortField']);
+const sortOrder = computed(() => store.getters['fileManager/sortOrder']);
+const selectedFile = computed(() => store.getters['fileManager/selectedFile']);
+const selectedFiles = computed(() => store.getters['fileManager/selectedFiles']);
+const canGoBack = computed(() => store.getters['fileManager/canGoBack']);
+const canGoForward = computed(() => store.getters['fileManager/canGoForward']);
+
+// 本地组件状态
 const searchQuery = ref('');
-const sortField = ref('name');
-const sortOrder = ref('asc');
 const loading = ref(false);
 const lastUpdated = ref(null);
-
-// 移动端检测
 const isMobile = ref(false);
-
-// 导航相关
-const navigationHistory = ref([]);
-const currentHistoryIndex = ref(-1);
 const breadcrumbs = ref([{ name: '根目录', path: '' }]);
-
-// 侧边栏状态
 const sidebarCollapsed = ref(false);
 const showPropertiesPanel = ref(true);
-
-// 文件选择相关
-const selectedFile = ref(null);
-const selectedFiles = ref([]);
 const fileCount = ref(0);
 
 // 对话框状态
@@ -259,8 +254,6 @@ const fileBrowserRef = ref(null);
 const contextMenuRef = ref(null);
 
 // 计算属性
-const canGoBack = computed(() => currentHistoryIndex.value > 0);
-const canGoForward = computed(() => currentHistoryIndex.value < navigationHistory.value.length - 1);
 
 // 右键菜单项
 const contextMenuItems = computed(() => {
@@ -284,41 +277,21 @@ const contextMenuItems = computed(() => {
 });
 
 // 导航方法
+// 导航方法 (调用 Vuex actions)
 const navigateTo = (path) => {
-  if (path === currentPath.value) return;
-
-  // 添加到历史记录
-  if (currentHistoryIndex.value < navigationHistory.value.length - 1) {
-    navigationHistory.value = navigationHistory.value.slice(0, currentHistoryIndex.value + 1);
-  }
-  navigationHistory.value.push(path);
-  currentHistoryIndex.value = navigationHistory.value.length - 1;
-
-  currentPath.value = path;
-  updateBreadcrumbs(path);
+  store.dispatch('fileManager/navigateTo', path);
 };
 
 const goBack = () => {
-  if (canGoBack.value) {
-    currentHistoryIndex.value--;
-    currentPath.value = navigationHistory.value[currentHistoryIndex.value];
-    updateBreadcrumbs(currentPath.value);
-  }
+  store.dispatch('fileManager/goBack');
 };
 
 const goForward = () => {
-  if (canGoForward.value) {
-    currentHistoryIndex.value++;
-    currentPath.value = navigationHistory.value[currentHistoryIndex.value];
-    updateBreadcrumbs(currentPath.value);
-  }
+  store.dispatch('fileManager/goForward');
 };
 
 const goUp = () => {
-  if (currentPath.value) {
-    const parentPath = currentPath.value.split('/').slice(0, -1).join('/');
-    navigateTo(parentPath);
-  }
+  store.dispatch('fileManager/goUp');
 };
 
 const updateBreadcrumbs = (path) => {
@@ -333,19 +306,6 @@ const updateBreadcrumbs = (path) => {
 };
 
 // 事件处理方法
-const onDirectorySelected = (path) => {
-  navigateTo(path);
-};
-
-const onFileSelected = (file) => {
-  selectedFile.value = file;
-  selectedFiles.value = file ? [file] : [];
-};
-
-const onSelectionChanged = (files) => {
-  selectedFiles.value = files;
-  selectedFile.value = files.length === 1 ? files[0] : null;
-};
 
 // 工具栏操作
 const handleUpload = () => {
@@ -372,12 +332,7 @@ const handleSearch = (query) => {
 };
 
 const sortBy = (field) => {
-  if (sortField.value === field) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortField.value = field;
-    sortOrder.value = 'asc';
-  }
+  store.dispatch('fileManager/updateSort', field);
 };
 
 // 侧边栏控制
@@ -515,10 +470,6 @@ const onItemDoubleClick = (item) => {
 
 // 生命周期
 onMounted(() => {
-  // 初始化导航历史
-  navigationHistory.value = [''];
-  currentHistoryIndex.value = 0;
-
   // 监听窗口大小变化
   window.addEventListener('resize', handleResize);
   handleResize();
@@ -529,6 +480,7 @@ onMounted(() => {
 
 // 监听路径变化
 watch(currentPath, (newPath) => {
+  // currentPath is now a computed property from Vuex
   updateBreadcrumbs(newPath);
 });
 </script>

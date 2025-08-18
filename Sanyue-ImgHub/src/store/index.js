@@ -1,6 +1,7 @@
 import { createStore } from 'vuex'
 import axios from '@/utils/axios';
 import createPersistedState from 'vuex-persistedstate';
+import fileManager from './modules/fileManager';
 
 export default createStore({
   state: {
@@ -135,6 +136,7 @@ export default createStore({
     }
   },
   modules: {
+    fileManager,
   },
   plugins: [createPersistedState()]
 })
