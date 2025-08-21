@@ -1,0 +1,283 @@
+// Main Stylesheet for macOS Finder Style Image Bed
+
+// Import macOS design system
+@import './macOS/variables.scss';
+@import './macOS/animations.scss';
+@import './macOS/components.scss';
+
+// ===== 全局样式重置 =====
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  font-family: $mac-font-family;
+  font-size: $mac-text-base;
+  line-height: $mac-leading-normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--mac-text-primary);
+  overflow: hidden;
+  font-family: $mac-font-family;
+}
+
+#app {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $mac-spacing-8;
+}
+
+// ===== Element Plus 样式覆盖 =====
+
+// 让 Element Plus 组件更符合 macOS 风格
+.el-button {
+  border-radius: $mac-radius-base;
+  font-family: $mac-font-family;
+  font-weight: $mac-font-medium;
+  transition: all $mac-transition-fast;
+  
+  &.el-button--primary {
+    background: var(--mac-accent-color);
+    border-color: var(--mac-accent-color);
+    
+    &:hover {
+      background: var(--mac-accent-hover);
+      border-color: var(--mac-accent-hover);
+    }
+  }
+}
+
+.el-input__wrapper {
+  border-radius: $mac-radius-base;
+  box-shadow: none;
+  border: 1px solid var(--mac-border-primary);
+  transition: all $mac-transition-fast;
+  
+  &:hover {
+    border-color: var(--mac-border-secondary);
+  }
+  
+  &.is-focus {
+    border-color: var(--mac-accent-color);
+    box-shadow: 0 0 0 2px rgba($mac-blue, 0.2);
+  }
+}
+
+.el-dropdown-menu {
+  border-radius: $mac-radius-md;
+  box-shadow: $mac-shadow-lg;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--mac-border-primary);
+}
+
+.el-tooltip__popper {
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: $mac-radius-sm;
+  font-size: $mac-text-xs;
+}
+
+// ===== 自定义滚动条 =====
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.3);
+    background-clip: content-box;
+  }
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  background-clip: content-box;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    background-clip: content-box;
+  }
+}
+
+// ===== 工具类 =====
+
+// 文本样式
+.text-xs { font-size: $mac-text-xs; }
+.text-sm { font-size: $mac-text-sm; }
+.text-base { font-size: $mac-text-base; }
+.text-md { font-size: $mac-text-md; }
+.text-lg { font-size: $mac-text-lg; }
+.text-xl { font-size: $mac-text-xl; }
+
+.font-light { font-weight: $mac-font-light; }
+.font-regular { font-weight: $mac-font-regular; }
+.font-medium { font-weight: $mac-font-medium; }
+.font-semibold { font-weight: $mac-font-semibold; }
+.font-bold { font-weight: $mac-font-bold; }
+
+// 间距
+.p-0 { padding: $mac-spacing-0; }
+.p-1 { padding: $mac-spacing-1; }
+.p-2 { padding: $mac-spacing-2; }
+.p-3 { padding: $mac-spacing-3; }
+.p-4 { padding: $mac-spacing-4; }
+.p-6 { padding: $mac-spacing-6; }
+.p-8 { padding: $mac-spacing-8; }
+
+.m-0 { margin: $mac-spacing-0; }
+.m-1 { margin: $mac-spacing-1; }
+.m-2 { margin: $mac-spacing-2; }
+.m-3 { margin: $mac-spacing-3; }
+.m-4 { margin: $mac-spacing-4; }
+.m-6 { margin: $mac-spacing-6; }
+.m-8 { margin: $mac-spacing-8; }
+
+// 布局
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+// 位置
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+
+// 显示/隐藏
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+
+// 透明度
+.opacity-0 { opacity: 0; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+// 光标
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+// 选择
+.select-none { user-select: none; }
+.select-text { user-select: text; }
+
+// 溢出
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-scroll { overflow: scroll; }
+
+// ===== 响应式断点 =====
+
+@media (max-width: $mac-breakpoint-sm) {
+  .sm\:hidden { display: none; }
+  .sm\:block { display: block; }
+}
+
+@media (max-width: $mac-breakpoint-md) {
+  .md\:hidden { display: none; }
+  .md\:block { display: block; }
+}
+
+@media (max-width: $mac-breakpoint-lg) {
+  .lg\:hidden { display: none; }
+  .lg\:block { display: block; }
+}
+
+// ===== 打印样式 =====
+
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+// ===== 高对比度模式 =====
+
+@media (prefers-contrast: high) {
+  :root {
+    --mac-border-primary: #000000;
+    --mac-border-secondary: #333333;
+    --mac-text-primary: #000000;
+    --mac-text-secondary: #333333;
+  }
+  
+  .dark-theme {
+    --mac-border-primary: #ffffff;
+    --mac-border-secondary: #cccccc;
+    --mac-text-primary: #ffffff;
+    --mac-text-secondary: #cccccc;
+  }
+}
+
+// ===== 减少动画模式 =====
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// ===== 焦点可见性 =====
+
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+.focus-visible {
+  outline: 2px solid var(--mac-accent-color);
+  outline-offset: 2px;
+}
+
+// ===== 选择高亮 =====
+
+::selection {
+  background: rgba($mac-blue, 0.3);
+  color: var(--mac-text-primary);
+}
+
+::-moz-selection {
+  background: rgba($mac-blue, 0.3);
+  color: var(--mac-text-primary);
+}
