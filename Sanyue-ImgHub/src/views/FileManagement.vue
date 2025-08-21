@@ -156,7 +156,7 @@ import {
 
 // 导入组件
 import FileList from '@/components/FileList.vue';
-import FilePropertiesPanel from '@/components/FilePropertiesPanel.vue';
+import FilePropertiesPanel from '@/components/FilePropertiesPanel_simple.vue';
 import TagManager from '@/components/TagManager.vue';
 import FavoriteManager from '@/components/FavoriteManager.vue';
 import FavoriteFileList from '@/components/FavoriteFileList.vue';

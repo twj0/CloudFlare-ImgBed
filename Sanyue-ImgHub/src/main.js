@@ -14,7 +14,12 @@ import store from './store'
 
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import 'element-plus/theme-chalk/dark/css-vars.css'
-import './styles/global.css'
+// import './styles/global.css' // 文件不存在，暂时注释
+
+// 导入模拟文件API（仅在开发环境）
+if (process.env.NODE_ENV === 'development') {
+  import('./utils/mockFileAPI.js')
+}
 
 
 library.add(fas);

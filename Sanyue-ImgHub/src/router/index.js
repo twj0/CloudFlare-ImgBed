@@ -85,6 +85,17 @@ const routes = [
     beforeEnter: adminAuthGuard
   },
   {
+    path: '/windows-file-manager',
+    name: 'windowsFileManager',
+    component: () => import('../views/WindowsFileManager.vue'),
+    beforeEnter: adminAuthGuard
+  },
+  {
+    path: '/file-manager-demo',
+    name: 'fileManagerDemo',
+    component: () => import('../views/FileManagerDemo.vue')
+  },
+  {
     path: '/customerConfig',
     name: 'customerConfig',
     component: () => import('../views/CustomerConfig.vue'),

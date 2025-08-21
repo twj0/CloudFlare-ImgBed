@@ -164,8 +164,8 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue';
-import { getTags, createTag, updateTag, deleteTag } from '@/utils/fileManagerAPI';
-import { Tag, TAG_COLORS } from '@/models/fileManagerModels';
+// import { getTags, createTag, updateTag, deleteTag } from '@/utils/fileManagerAPI';
+// import { Tag, TAG_COLORS } from '@/models/fileManagerModels';
 
 // 响应式数据
 const tags = ref([]);

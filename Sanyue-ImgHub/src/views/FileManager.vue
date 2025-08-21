@@ -213,7 +213,7 @@ import {
 // 组件导入
 import DirectoryTree from '@/components/DirectoryTree.vue';
 import ModernFileBrowser from '@/components/ModernFileBrowser.vue';
-import FilePropertiesPanel from '@/components/FilePropertiesPanel.vue';
+import FilePropertiesPanel from '@/components/FilePropertiesPanel_simple.vue';
 import FileManagerDialogs from '@/components/FileManagerDialogs.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import MobileFileManager from '@/components/MobileFileManager.vue';

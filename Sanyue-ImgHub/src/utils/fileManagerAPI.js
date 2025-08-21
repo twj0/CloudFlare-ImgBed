@@ -680,6 +680,35 @@ export async function batchRemoveTags(fileIds, tagIds) {
 }
 
 /**
+ * 更新收藏文件的备注
+ * @param {string} fileId - 文件ID
+ * @param {string} note - 备注内容
+ * @param {string} groupId - 分组ID（可选）
+ * @returns {Promise<boolean>} 是否更新成功
+ */
+export async function updateFavoriteNote(fileId, note, groupId = 'default') {
+  try {
+    const encodedPath = fileId.split('/').map(part => encodeURIComponent(part)).join(',');
+    const response = await axios.put(`/api/manage/favorites/${encodedPath}/note`, {
+      note,
+      groupId
+    });
+
+    if (response.data.success) {
+      ElMessage.success('备注更新成功');
+      return true;
+    } else {
+      ElMessage.error('备注更新失败');
+      return false;
+    }
+  } catch (error) {
+    console.error('Update favorite note failed:', error);
+    ElMessage.error(`更新备注失败: ${error.response?.data?.error || error.message}`);
+    return false;
+  }
+}
+
+/**
  * 批量从收藏夹移除
  * @param {Array<string>} fileIds - 文件ID数组
  * @param {string} groupId - 分组ID（可选）

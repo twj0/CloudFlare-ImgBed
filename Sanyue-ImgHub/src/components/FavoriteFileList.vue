@@ -172,12 +172,12 @@ import {
   Star, View, Download, EditPen, Delete, Document, 
   Picture, VideoPlay, Headphones, Box 
 } from '@element-plus/icons-vue';
-import { 
-  getFavoriteFiles, 
-  removeFromFavorites, 
-  updateFavoriteNote 
-} from '@/utils/fileManagerAPI';
-import ContextMenu from './ContextMenu.vue';
+// import {
+//   getFavoriteFiles,
+//   removeFromFavorites,
+//   updateFavoriteNote
+// } from '@/utils/fileManagerAPI';
+// import ContextMenu from './ContextMenu.vue';
 
 // Props
 const props = defineProps({
@@ -548,6 +548,36 @@ defineExpose({
 
 .unsupported-preview p {
   margin: 16px 0;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+  position: fixed;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  min-width: 120px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #606266;
+  transition: background-color 0.3s;
+}
+
+.context-menu-item:hover {
+  background-color: #f5f7fa;
+}
+
+.context-menu-item .el-icon {
+  margin-right: 8px;
+  font-size: 16px;
 }
 
 .empty-state {

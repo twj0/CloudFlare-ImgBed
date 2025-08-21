@@ -215,7 +215,7 @@ import {
 // 组件导入
 import DirectoryTree from './DirectoryTree.vue';
 import MobileFileBrowser from './MobileFileBrowser.vue';
-import FilePropertiesPanel from './FilePropertiesPanel.vue';
+import FilePropertiesPanel from './FilePropertiesPanel_simple.vue';
 import FileManagerDialogs from './FileManagerDialogs.vue';
 
 // Props

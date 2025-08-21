@@ -36,6 +36,10 @@
                         <font-awesome-icon icon="tasks" style="margin-right: 5px;"></font-awesome-icon>
                         高级管理
                     </el-dropdown-item>
+                    <el-dropdown-item command="windows-file-manager" v-if="activeTab !== 'windows-file-manager'">
+                        <font-awesome-icon icon="window-maximize" style="margin-right: 5px;"></font-awesome-icon>
+                        Windows 文件管理器
+                    </el-dropdown-item>
                     <el-dropdown-item command="">
                         <font-awesome-icon icon="upload" style="margin-right: 5px;"></font-awesome-icon>
                         上传页面
@@ -73,6 +77,8 @@ export default {
                 return '文件管理';
             } else if (this.activeTab === 'file-management') {
                 return '高级管理';
+            } else if (this.activeTab === 'windows-file-manager') {
+                return 'Windows 文件管理器';
             } else {
                 return '上传页面';
             }
@@ -88,6 +94,8 @@ export default {
                 return 'folder-open';
             } else if (this.activeTab === 'file-management') {
                 return 'tasks';
+            } else if (this.activeTab === 'windows-file-manager') {
+                return 'window-maximize';
             } else {
                 return 'upload';
             }
