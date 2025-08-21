@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunksanyue_imghub"]=self["webpackChunksanyue_imghub"]||[]).push([[799],{3799:function(a,e,n){n.r(e),n.d(e,{default:function(){return g}});var u=n(6768),s=n(9057);const t={class:"image-manager"};var i={__name:"ImageManager",setup(a){return(a,e)=>((0,u.uX)(),(0,u.CE)("div",t,[(0,u.bF)(s.A,{"initial-path":"/images"})]))}},r=n(1241);const c=(0,r.A)(i,[["__scopeId","data-v-77727d7a"]]);var g=c}}]);
+//# sourceMappingURL=799.024fcdc9.js.map

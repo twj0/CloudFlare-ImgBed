@@ -1,0 +1,8 @@
+# SPA routing for Vue.js application
+# This ensures all routes are handled by the Vue Router
+
+# API routes should be handled by the backend
+/api/* https://imgbed.ttwwjj.ddns-ip.net/api/:splat 200
+
+# All other routes should serve the index.html for SPA routing
+/* /index.html 200

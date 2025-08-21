@@ -1,0 +1,13 @@
+# Cloudflare Pages configuration for macOS Finder Style Image Bed
+
+name = "macos-finder-imgbed"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "npm run build"
+cwd = "front"
+destination = "front/dist"
+
+[build.environment_variables]
+NODE_ENV = "production"
+VUE_APP_API_BASE_URL = "https://imgbed.ttwwjj.ddns-ip.net"
