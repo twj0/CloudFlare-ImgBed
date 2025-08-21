@@ -183,6 +183,7 @@ const formatSize = (bytes) => {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease-out;
+  -webkit-user-select: none;
   user-select: none;
   position: relative;
   

@@ -179,6 +179,7 @@ const handleTagClick = (tag) => {
 .finder-sidebar {
   width: 200px;
   background: rgba(246, 246, 246, 0.8);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--mac-border-primary);
   display: flex;

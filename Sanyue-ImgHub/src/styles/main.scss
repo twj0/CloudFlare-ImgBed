@@ -81,6 +81,7 @@ body {
 .el-dropdown-menu {
   border-radius: $mac-radius-md;
   box-shadow: $mac-shadow-lg;
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid var(--mac-border-primary);
 }
@@ -188,8 +189,14 @@ body {
 .cursor-not-allowed { cursor: not-allowed; }
 
 // 选择
-.select-none { user-select: none; }
-.select-text { user-select: text; }
+.select-none {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.select-text {
+  -webkit-user-select: text;
+  user-select: text;
+}
 
 // 溢出
 .overflow-hidden { overflow: hidden; }

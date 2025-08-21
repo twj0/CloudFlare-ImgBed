@@ -139,6 +139,7 @@ const formatSize = (bytes) => {
   background: linear-gradient(to bottom, 
     rgba(248, 248, 248, 0.9) 0%, 
     rgba(240, 240, 240, 0.9) 100%);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   padding: 0 12px;

@@ -91,6 +91,7 @@ const handleLogin = async () => {
 
 .login-card {
   background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-radius: 16px;
   padding: 40px;

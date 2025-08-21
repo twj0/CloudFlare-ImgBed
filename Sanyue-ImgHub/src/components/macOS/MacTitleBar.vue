@@ -86,12 +86,14 @@ const showMaximizeIcon = ref(false)
   background: linear-gradient(to bottom, 
     rgba(255, 255, 255, 0.8) 0%, 
     rgba(255, 255, 255, 0.6) 100%);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   padding: 0 12px;
   position: relative;
+  -webkit-user-select: none;
   user-select: none;
   -webkit-app-region: drag;
   
