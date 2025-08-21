@@ -270,17 +270,35 @@ const actions = {
           const fileName = file.name || file.id || 'unknown'
           const metadata = file.metadata || {}
 
+          // 处理Telegram存储的文件
+          let fileUrl = `/file/${fileName}`
+          let thumbnailUrl = `/file/${fileName}`
+
+          if (metadata.Channel === 'TelegramNew') {
+            // Telegram文件使用特殊的URL
+            fileUrl = file.telegramUrl || `/file/${fileName}`
+            thumbnailUrl = file.thumbnailUrl || `/file/${fileName}?thumbnail=true`
+          } else if (metadata.url) {
+            // 其他存储方式使用metadata中的URL
+            fileUrl = metadata.url
+            thumbnailUrl = metadata.thumbnail || metadata.url
+          }
+
           items.push({
             name: fileName,
             path: path === '/' ? `/${fileName}` : `${path}/${fileName}`,
             type: getFileType(fileName),
-            size: metadata.size || 0,
+            size: file.size || metadata.FileSize ? parseFloat(metadata.FileSize) * 1024 * 1024 : 0,
             modified: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
             created: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
-            url: metadata.url || `/api/file/${fileName}`,
-            thumbnail: metadata.thumbnail || metadata.url || `/api/file/${fileName}`,
+            url: fileUrl,
+            thumbnail: thumbnailUrl,
             width: metadata.width,
-            height: metadata.height
+            height: metadata.height,
+            // Telegram特有信息
+            channel: metadata.Channel,
+            telegramFileId: file.telegramFileId,
+            isChunked: metadata.isChunked || false
           })
         })
       }

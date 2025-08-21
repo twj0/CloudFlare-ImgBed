@@ -173,6 +173,22 @@ async function getAllFileRecords(env, dir) {
                 continue;
             }
 
+            // 为Telegram存储的文件添加访问信息
+            if (item.metadata.Channel === 'TelegramNew' && item.metadata.TgFileId) {
+                item.telegramFileId = item.metadata.TgFileId;
+                item.telegramUrl = `/file/${item.name}`;
+
+                // 添加缩略图URL（如果是图片）
+                if (item.metadata.FileType && item.metadata.FileType.startsWith('image/')) {
+                    item.thumbnailUrl = `/file/${item.name}?thumbnail=true`;
+                }
+
+                // 添加文件大小信息
+                if (item.metadata.FileSize) {
+                    item.size = parseFloat(item.metadata.FileSize) * 1024 * 1024; // 转换为字节
+                }
+            }
+
             allRecords.push(item);
         }
 

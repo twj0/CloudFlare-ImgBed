@@ -61,6 +61,13 @@
             @retry="handleRetryLoad"
             @diagnostic-complete="handleDiagnosticComplete"
           />
+
+          <!-- Telegram状态监控 -->
+          <TelegramStatus
+            v-if="showDiagnostic"
+            @status-change="handleTelegramStatusChange"
+            @file-uploaded="handleTelegramFileUploaded"
+          />
         </div>
 
         <!-- 内容视图 -->
@@ -162,6 +169,7 @@ import UploadProgressModal from '../image/UploadProgressModal.vue'
 import NewFolderDialog from './NewFolderDialog.vue'
 import BatchFolderDialog from './BatchFolderDialog.vue'
 import NetworkDiagnostic from '../ui/NetworkDiagnostic.vue'
+import TelegramStatus from '../ui/TelegramStatus.vue'
 
 // Props
 const props = defineProps({
@@ -726,6 +734,25 @@ const handleDiagnosticComplete = (diagnosis) => {
   if (diagnosis.issues.length > 0) {
     lastNetworkError.value = new Error(diagnosis.issues.join('; '))
   }
+}
+
+const handleTelegramStatusChange = (status) => {
+  console.log('Telegram status changed:', status)
+
+  if (status.botConnected && status.chatAccessible) {
+    ElMessage.success('Telegram集成正常工作')
+  } else {
+    ElMessage.warning('Telegram集成需要配置')
+  }
+}
+
+const handleTelegramFileUploaded = (result) => {
+  console.log('File uploaded to Telegram:', result)
+
+  // 刷新文件列表以显示新上传的文件
+  store.dispatch('finder/refreshCurrentPath')
+
+  ElMessage.success('文件已上传到Telegram')
 }
 
 // 生命周期
