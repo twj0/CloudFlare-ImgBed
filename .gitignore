@@ -2,9 +2,40 @@
 data/*
 node_modules
 .DS_Store
+
+# Build outputs (should not be committed)
+css/
+js/
+front/dist/
+dist/
+*.css.gz
+*.js.gz
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Documentation files (generated)
 Sanyue-ImgHub/WINDOWS_FILE_MANAGER_README.md
 Sanyue-ImgHub/MACOS_FINDER_DEPLOYMENT.md
 CloudFlare-ImgBed/DEPLOYMENT_SUCCESS.md
 CloudFlare-ImgBed/README_DEPLOYMENT.md
 CloudFlare-ImgBed/.github/workflows/deploy-frontend.yml
 PROJECT_ANALYSIS_AND_IMPROVEMENTS.md
+DEPLOYMENT_FIX_README.md

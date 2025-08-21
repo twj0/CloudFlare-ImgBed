@@ -4,6 +4,31 @@ import { fetchOthersConfig } from "./sysConfig";
 
 let disableTelemetry = false;
 
+// CORS headers for API responses
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+  'Content-Type': 'application/json'
+};
+
+// Helper function to create standardized API responses
+export function createResponse(data, status = 200, additionalHeaders = {}) {
+  const headers = {
+    ...corsHeaders,
+    ...additionalHeaders
+  };
+
+  return new Response(
+    JSON.stringify(data),
+    {
+      status,
+      headers
+    }
+  );
+}
+
 export async function errorHandling(context) {
   // 读取KV中的设置
   const othersConfig = await fetchOthersConfig(context.env);
