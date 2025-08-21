@@ -35,7 +35,7 @@
       
       <!-- 主内容区 -->
       <div class="finder-content">
-        <!-- 简单错误显示 -->
+        <!-- 网络诊断和错误显示 -->
         <div v-if="error" class="error-banner">
           <el-alert
             :title="error"
@@ -47,9 +47,20 @@
             <template #default>
               <div class="error-actions">
                 <el-button size="small" @click="handleRetryLoad">重试</el-button>
+                <el-button size="small" @click="showDiagnostic = !showDiagnostic">
+                  {{ showDiagnostic ? '隐藏诊断' : '网络诊断' }}
+                </el-button>
               </div>
             </template>
           </el-alert>
+
+          <!-- 网络诊断面板 -->
+          <NetworkDiagnostic
+            v-if="showDiagnostic"
+            :last-error="lastNetworkError"
+            @retry="handleRetryLoad"
+            @diagnostic-complete="handleDiagnosticComplete"
+          />
         </div>
 
         <!-- 内容视图 -->
@@ -150,6 +161,7 @@ import ImagePreviewModal from '../image/ImagePreviewModal.vue'
 import UploadProgressModal from '../image/UploadProgressModal.vue'
 import NewFolderDialog from './NewFolderDialog.vue'
 import BatchFolderDialog from './BatchFolderDialog.vue'
+import NetworkDiagnostic from '../ui/NetworkDiagnostic.vue'
 
 // Props
 const props = defineProps({
@@ -202,6 +214,10 @@ const batchFolderDialog = ref({
 // 组件引用
 const newFolderDialogRef = ref(null)
 const batchFolderDialogRef = ref(null)
+
+// 网络诊断相关状态
+const showDiagnostic = ref(false)
+const lastNetworkError = ref(null)
 
 // 计算属性
 const windowTitle = computed(() => {
@@ -700,6 +716,16 @@ const handleRetryLoad = async () => {
 
 const clearError = () => {
   store.commit('finder/SET_ERROR', null)
+  showDiagnostic.value = false
+  lastNetworkError.value = null
+}
+
+const handleDiagnosticComplete = (diagnosis) => {
+  console.log('Network diagnostic completed:', diagnosis)
+
+  if (diagnosis.issues.length > 0) {
+    lastNetworkError.value = new Error(diagnosis.issues.join('; '))
+  }
 }
 
 // 生命周期

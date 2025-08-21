@@ -1,4 +1,5 @@
 // Finder状态管理模块
+import { fetchWithRetry, isOnline } from '@/utils/networkUtils'
 
 const state = {
   // 当前路径
@@ -217,25 +218,33 @@ const actions = {
     commit('SET_LOADING', true)
     commit('SET_ERROR', null)
 
-    try {
-      console.log('Loading items for path:', path)
+    // 重试机制
+    const maxRetries = 3
+    let retryCount = 0
 
-      // 直接调用API
-      const response = await fetch(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`Loading items for path: ${path} (attempt ${retryCount + 1}/${maxRetries})`)
+
+        // 检查网络连接
+        if (!isOnline()) {
+          throw new Error('网络连接不可用，请检查网络设置')
         }
-      })
 
-      console.log('API response status:', response.status)
+        // 使用带重试的fetch
+        const response = await fetchWithRetry(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000,
+          retryDelay: 1000
+        }, 3)
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+        console.log('API response status:', response.status)
 
-      const data = await response.json()
-      console.log('API response data:', data)
+        const data = await response.json()
+        console.log('API response data:', data)
 
       // 转换API响应格式
       const items = []
@@ -276,26 +285,41 @@ const actions = {
         })
       }
 
-      console.log('Processed items:', items)
-      commit('SET_ITEMS', items)
+        console.log('Processed items:', items)
+        commit('SET_ITEMS', items)
 
-    } catch (error) {
-      console.error('Failed to load items:', error)
-      commit('SET_ERROR', error.message)
+        // 成功加载，退出重试循环
+        break
 
-      // 使用模拟数据作为后备
-      try {
-        console.log('Using fallback mock data')
-        const fallbackResponse = await mockAPI.getItems(path)
-        commit('SET_ITEMS', fallbackResponse)
-        commit('SET_ERROR', '网络连接问题，显示离线数据')
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError)
-        commit('SET_ITEMS', [])
+      } catch (error) {
+        console.error(`Failed to load items (attempt ${retryCount + 1}):`, error)
+        retryCount++
+
+        if (retryCount >= maxRetries) {
+          // 所有重试都失败了
+          commit('SET_ERROR', error.message)
+
+          // 使用模拟数据作为最后的后备
+          try {
+            console.log('All retries failed, using fallback mock data')
+            const fallbackResponse = await mockAPI.getItems(path)
+            commit('SET_ITEMS', fallbackResponse)
+            commit('SET_ERROR', '网络连接问题，显示离线数据')
+          } catch (fallbackError) {
+            console.error('Fallback also failed:', fallbackError)
+            commit('SET_ITEMS', [])
+          }
+          break
+        } else {
+          // 等待一段时间后重试
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000) // 指数退避，最大5秒
+          console.log(`Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
       }
-    } finally {
-      commit('SET_LOADING', false)
     }
+
+    commit('SET_LOADING', false)
   },
   
   // 上传文件
