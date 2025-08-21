@@ -35,16 +35,22 @@
       
       <!-- 主内容区 -->
       <div class="finder-content">
-        <!-- 错误显示 -->
-        <ErrorDisplay
-          v-if="error"
-          :error="error"
-          type="error"
-          :show-retry="true"
-          :show-details="true"
-          @retry="handleRetryLoad"
-          @dismiss="clearError"
-        />
+        <!-- 简单错误显示 -->
+        <div v-if="error" class="error-banner">
+          <el-alert
+            :title="error"
+            type="error"
+            :closable="true"
+            show-icon
+            @close="clearError"
+          >
+            <template #default>
+              <div class="error-actions">
+                <el-button size="small" @click="handleRetryLoad">重试</el-button>
+              </div>
+            </template>
+          </el-alert>
+        </div>
 
         <!-- 内容视图 -->
         <FinderContentView
@@ -144,7 +150,6 @@ import ImagePreviewModal from '../image/ImagePreviewModal.vue'
 import UploadProgressModal from '../image/UploadProgressModal.vue'
 import NewFolderDialog from './NewFolderDialog.vue'
 import BatchFolderDialog from './BatchFolderDialog.vue'
-import ErrorDisplay from '../ui/ErrorDisplay.vue'
 
 // Props
 const props = defineProps({
@@ -502,7 +507,44 @@ const startUpload = (files, targetPath) => {
 }
 
 const createNewFolder = () => {
-  newFolderDialog.value.visible = true
+  // 直接使用简单的prompt作为临时解决方案
+  const folderName = prompt('请输入文件夹名称:')
+
+  if (folderName && folderName.trim()) {
+    handleCreateFolderDirect(folderName.trim())
+  }
+}
+
+// 直接创建文件夹的方法
+const handleCreateFolderDirect = async (folderName) => {
+  try {
+    const response = await fetch('/api/manage/folders/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: folderName,
+        path: currentPath.value,
+        description: `通过UI创建的文件夹: ${folderName}`,
+        permissions: 'public',
+        tags: []
+      })
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      ElMessage.success('文件夹创建成功')
+      // 刷新文件列表
+      store.dispatch('finder/refreshCurrentPath')
+    } else {
+      ElMessage.error(`创建失败: ${result.error}`)
+    }
+  } catch (error) {
+    console.error('Create folder error:', error)
+    ElMessage.error(`创建失败: ${error.message}`)
+  }
 }
 
 const openImagePreview = (image) => {
@@ -694,5 +736,14 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.error-banner {
+  margin: 12px;
+  z-index: 10;
+}
+
+.error-actions {
+  margin-top: 8px;
 }
 </style>

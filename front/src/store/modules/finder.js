@@ -218,19 +218,79 @@ const actions = {
     commit('SET_ERROR', null)
 
     try {
-      // 调用真实API
-      const response = await realAPI.getItems(path)
-      commit('SET_ITEMS', response)
+      console.log('Loading items for path:', path)
+
+      // 直接调用API
+      const response = await fetch(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('API response status:', response.status)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log('API response data:', data)
+
+      // 转换API响应格式
+      const items = []
+
+      // 添加文件夹
+      if (data.directories && Array.isArray(data.directories)) {
+        data.directories.forEach(dir => {
+          const dirName = typeof dir === 'string' ? dir : (dir.name || 'Unknown Folder')
+          items.push({
+            name: dirName,
+            path: path === '/' ? `/${dirName}` : `${path}/${dirName}`,
+            type: 'folder',
+            size: 0,
+            modified: Date.now(),
+            created: Date.now()
+          })
+        })
+      }
+
+      // 添加文件
+      if (data.files && Array.isArray(data.files)) {
+        data.files.forEach(file => {
+          const fileName = file.name || file.id || 'unknown'
+          const metadata = file.metadata || {}
+
+          items.push({
+            name: fileName,
+            path: path === '/' ? `/${fileName}` : `${path}/${fileName}`,
+            type: getFileType(fileName),
+            size: metadata.size || 0,
+            modified: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
+            created: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
+            url: metadata.url || `/api/file/${fileName}`,
+            thumbnail: metadata.thumbnail || metadata.url || `/api/file/${fileName}`,
+            width: metadata.width,
+            height: metadata.height
+          })
+        })
+      }
+
+      console.log('Processed items:', items)
+      commit('SET_ITEMS', items)
+
     } catch (error) {
       console.error('Failed to load items:', error)
       commit('SET_ERROR', error.message)
 
-      // 如果API失败，尝试使用模拟数据作为后备
+      // 使用模拟数据作为后备
       try {
+        console.log('Using fallback mock data')
         const fallbackResponse = await mockAPI.getItems(path)
         commit('SET_ITEMS', fallbackResponse)
-        commit('SET_ERROR', '使用离线数据，部分功能可能不可用')
+        commit('SET_ERROR', '网络连接问题，显示离线数据')
       } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError)
         commit('SET_ITEMS', [])
       }
     } finally {
@@ -452,87 +512,7 @@ const getters = {
   }
 }
 
-// 真实API调用
-const realAPI = {
-  async getItems(path) {
-    try {
-      // 调用文件列表API
-      const response = await fetch(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      // 转换API响应格式为前端需要的格式
-      const items = []
-
-      // 添加文件夹
-      if (data.directories && Array.isArray(data.directories)) {
-        data.directories.forEach(dir => {
-          items.push({
-            name: dir.name || dir,
-            path: path === '/' ? `/${dir.name || dir}` : `${path}/${dir.name || dir}`,
-            type: 'folder',
-            size: 0,
-            modified: Date.now(),
-            created: Date.now()
-          })
-        })
-      }
-
-      // 添加文件
-      if (data.files && Array.isArray(data.files)) {
-        data.files.forEach(file => {
-          const fileName = file.name || file.id || 'unknown'
-          const metadata = file.metadata || {}
-
-          items.push({
-            name: fileName,
-            path: path === '/' ? `/${fileName}` : `${path}/${fileName}`,
-            type: getFileType(fileName),
-            size: metadata.size || 0,
-            modified: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
-            created: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
-            url: metadata.url || `/api/file/${fileName}`,
-            thumbnail: metadata.thumbnail || metadata.url || `/api/file/${fileName}`,
-            width: metadata.width,
-            height: metadata.height
-          })
-        })
-      }
-
-      return items
-
-    } catch (error) {
-      console.error('Real API call failed:', error)
-      throw error
-    }
-  }
-}
-
-// 辅助函数：根据文件名判断文件类型
-function getFileType(fileName) {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']
-  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm']
-  const audioExts = ['mp3', 'wav', 'flac', 'aac', 'ogg']
-  const documentExts = ['pdf', 'doc', 'docx', 'txt', 'rtf']
-
-  if (imageExts.includes(ext)) return 'image'
-  if (videoExts.includes(ext)) return 'video'
-  if (audioExts.includes(ext)) return 'audio'
-  if (documentExts.includes(ext)) return 'document'
-
-  return 'file'
-}
+// 这些复杂的API调用已经移到loadItems中直接实现
 
 // 模拟API（作为后备）
 const mockAPI = {
@@ -591,6 +571,25 @@ const mockAPI = {
     
     return mockData[path] || []
   }
+}
+
+// 辅助函数：根据文件名判断文件类型
+function getFileType(fileName) {
+  if (!fileName) return 'file'
+
+  const ext = fileName.split('.').pop()?.toLowerCase()
+
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico']
+  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv']
+  const audioExts = ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a']
+  const documentExts = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'md']
+
+  if (imageExts.includes(ext)) return 'image'
+  if (videoExts.includes(ext)) return 'video'
+  if (audioExts.includes(ext)) return 'audio'
+  if (documentExts.includes(ext)) return 'document'
+
+  return 'file'
 }
 
 export default {
