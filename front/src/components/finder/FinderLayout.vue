@@ -81,6 +81,26 @@
       @close="closeUploadModal"
       @cancel="cancelUpload"
     />
+
+    <!-- 新建文件夹对话框 -->
+    <NewFolderDialog
+      v-model="newFolderDialog.visible"
+      :current-path="currentPath"
+      :existing-folders="existingFolderNames"
+      @create="handleCreateFolder"
+      @close="closeNewFolderDialog"
+      ref="newFolderDialogRef"
+    />
+
+    <!-- 批量创建文件夹对话框 -->
+    <BatchFolderDialog
+      v-model="batchFolderDialog.visible"
+      :current-path="currentPath"
+      :existing-folders="existingFolderNames"
+      @batch-create="handleBatchCreateFolders"
+      @close="closeBatchFolderDialog"
+      ref="batchFolderDialogRef"
+    />
   </MacWindow>
 </template>
 
@@ -88,6 +108,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
+import { createFolder, batchCreateFolders } from '@/utils/folderAPI'
 import {
   ArrowLeft,
   ArrowRight,
@@ -110,6 +131,8 @@ import FinderContentView from './FinderContentView.vue'
 import MacContextMenu from '../ui/MacContextMenu.vue'
 import ImagePreviewModal from '../image/ImagePreviewModal.vue'
 import UploadProgressModal from '../image/UploadProgressModal.vue'
+import NewFolderDialog from './NewFolderDialog.vue'
+import BatchFolderDialog from './BatchFolderDialog.vue'
 
 // Props
 const props = defineProps({
@@ -150,6 +173,19 @@ const uploadModal = ref({
   progress: 0
 })
 
+// 新建文件夹对话框状态
+const newFolderDialog = ref({
+  visible: false
+})
+
+const batchFolderDialog = ref({
+  visible: false
+})
+
+// 组件引用
+const newFolderDialogRef = ref(null)
+const batchFolderDialogRef = ref(null)
+
 // 计算属性
 const windowTitle = computed(() => {
   const pathName = currentPath.value === '/' ? '图床' : currentPath.value.split('/').pop()
@@ -166,6 +202,20 @@ const sortField = computed(() => store.getters['finder/sortField'])
 const sortOrder = computed(() => store.getters['finder/sortOrder'])
 const favorites = computed(() => store.getters['finder/favorites'])
 const recentItems = computed(() => store.getters['finder/recentItems'])
+
+// 获取现有文件夹名称列表
+const existingFolderNames = computed(() => {
+  return items.value
+    .filter(item => item.type === 'folder')
+    .map(item => item.name)
+})
+
+// 获取现有文件夹名称列表
+const existingFolderNames = computed(() => {
+  return items.value
+    .filter(item => item.type === 'folder')
+    .map(item => item.name)
+})
 
 const statusBarContent = computed(() => {
   const itemCount = items.value.length
@@ -382,6 +432,7 @@ const getContextMenuItems = (item) => {
     return [
       { label: '上传图片', action: 'upload', icon: Upload },
       { label: '新建文件夹', action: 'new-folder', icon: FolderAdd },
+      { label: '批量创建文件夹', action: 'batch-new-folder', icon: FolderAdd },
       { type: 'divider' },
       { label: '刷新', action: 'refresh', icon: Refresh }
     ]
@@ -438,8 +489,7 @@ const startUpload = (files, targetPath) => {
 }
 
 const createNewFolder = () => {
-  // 实现新建文件夹逻辑
-  ElMessage.info('新建文件夹功能开发中')
+  newFolderDialog.value.visible = true
 }
 
 const openImagePreview = (image) => {
@@ -466,6 +516,54 @@ const handlePreviewNavigate = (direction) => {
 const cancelUpload = () => {
   // 实现取消上传逻辑
   closeUploadModal()
+}
+
+// 文件夹创建相关方法
+const closeNewFolderDialog = () => {
+  newFolderDialog.value.visible = false
+}
+
+const closeBatchFolderDialog = () => {
+  batchFolderDialog.value.visible = false
+}
+
+const handleCreateFolder = async (folderData) => {
+  try {
+    const result = await createFolder(folderData)
+
+    if (result.success) {
+      newFolderDialogRef.value?.handleCreateSuccess()
+      // 刷新当前目录
+      store.dispatch('finder/refreshCurrentPath')
+    } else {
+      newFolderDialogRef.value?.handleCreateError(new Error(result.message))
+    }
+  } catch (error) {
+    console.error('Create folder error:', error)
+    newFolderDialogRef.value?.handleCreateError(error)
+  }
+}
+
+const handleBatchCreateFolders = async (foldersData) => {
+  try {
+    const result = await batchCreateFolders(foldersData, currentPath.value)
+
+    if (result.success) {
+      batchFolderDialogRef.value?.handleBatchCreateSuccess()
+      // 刷新当前目录
+      store.dispatch('finder/refreshCurrentPath')
+
+      // 显示详细结果
+      if (result.data.errors.length > 0) {
+        ElMessage.warning(`部分文件夹创建失败，成功 ${result.data.summary.success} 个，失败 ${result.data.summary.failed} 个`)
+      }
+    } else {
+      batchFolderDialogRef.value?.handleBatchCreateError(new Error(result.message))
+    }
+  } catch (error) {
+    console.error('Batch create folders error:', error)
+    batchFolderDialogRef.value?.handleBatchCreateError(error)
+  }
 }
 
 const downloadFile = (item) => {
@@ -495,6 +593,9 @@ const executeAction = (action, item) => {
       break
     case 'new-folder':
       createNewFolder()
+      break
+    case 'batch-new-folder':
+      batchFolderDialog.value.visible = true
       break
     case 'refresh':
       store.dispatch('finder/refreshCurrentPath')

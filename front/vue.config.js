@@ -23,12 +23,18 @@ module.exports = defineConfig({
           plugins: [
             require('autoprefixer')({
               overrideBrowserslist: [
-                'Safari >= 9',
-                'iOS >= 9',
-                'Chrome >= 60',
-                'Firefox >= 60',
-                'Edge >= 79'
-              ]
+                'Safari >= 14',
+                'iOS >= 14',
+                'Chrome >= 90',
+                'Firefox >= 88',
+                'Edge >= 90'
+              ],
+              // 移除过时的vendor前缀
+              remove: true,
+              // 只添加必要的前缀
+              add: true,
+              // 忽略过时的flexbox语法
+              flexbox: 'no-2009'
             })
           ]
         }

@@ -38,7 +38,18 @@
     "sass": "^1.90.0",
     "sass-loader": "^16.0.5",
     "unplugin-auto-import": "^0.18.2",
-    "unplugin-vue-components": "^0.27.4"
+    "unplugin-vue-components": "^0.27.4",
+    "@fullhuman/postcss-purgecss": "^5.0.0",
+    "cssnano": "^6.0.0",
+    "postcss-color-function": "^4.1.0",
+    "postcss-critical-css": "^1.0.0",
+    "postcss-custom-properties": "^13.0.0",
+    "postcss-flexbugs-fixes": "^5.0.2",
+    "postcss-import": "^15.1.0",
+    "postcss-nested": "^6.0.1",
+    "postcss-preset-env": "^9.0.0",
+    "postcss-reporter": "^7.0.5",
+    "postcss-sort-media-queries": "^5.0.0"
   },
   "browserslist": [
     "> 1%",
