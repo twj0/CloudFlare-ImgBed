@@ -35,6 +35,17 @@
       
       <!-- 主内容区 -->
       <div class="finder-content">
+        <!-- 错误显示 -->
+        <ErrorDisplay
+          v-if="error"
+          :error="error"
+          type="error"
+          :show-retry="true"
+          :show-details="true"
+          @retry="handleRetryLoad"
+          @dismiss="clearError"
+        />
+
         <!-- 内容视图 -->
         <FinderContentView
           :current-path="currentPath"
@@ -133,6 +144,7 @@ import ImagePreviewModal from '../image/ImagePreviewModal.vue'
 import UploadProgressModal from '../image/UploadProgressModal.vue'
 import NewFolderDialog from './NewFolderDialog.vue'
 import BatchFolderDialog from './BatchFolderDialog.vue'
+import ErrorDisplay from '../ui/ErrorDisplay.vue'
 
 // Props
 const props = defineProps({
@@ -202,6 +214,7 @@ const sortField = computed(() => store.getters['finder/sortField'])
 const sortOrder = computed(() => store.getters['finder/sortOrder'])
 const favorites = computed(() => store.getters['finder/favorites'])
 const recentItems = computed(() => store.getters['finder/recentItems'])
+const error = computed(() => store.getters['finder/error'])
 
 // 获取现有文件夹名称列表
 const existingFolderNames = computed(() => {
@@ -529,33 +542,38 @@ const closeBatchFolderDialog = () => {
 
 const handleCreateFolder = async (folderData) => {
   try {
-    const result = await createFolder(folderData)
+    // 使用Vuex action创建文件夹
+    const result = await store.dispatch('finder/createFolder', folderData)
 
     if (result.success) {
       newFolderDialogRef.value?.handleCreateSuccess()
-      // 刷新当前目录
-      store.dispatch('finder/refreshCurrentPath')
+      ElMessage.success('文件夹创建成功')
     } else {
       newFolderDialogRef.value?.handleCreateError(new Error(result.message))
     }
   } catch (error) {
     console.error('Create folder error:', error)
     newFolderDialogRef.value?.handleCreateError(error)
+    ElMessage.error(`创建文件夹失败: ${error.message}`)
   }
 }
 
 const handleBatchCreateFolders = async (foldersData) => {
   try {
-    const result = await batchCreateFolders(foldersData, currentPath.value)
+    // 使用Vuex action批量创建文件夹
+    const result = await store.dispatch('finder/batchCreateFolders', {
+      folders: foldersData,
+      path: currentPath.value
+    })
 
     if (result.success) {
       batchFolderDialogRef.value?.handleBatchCreateSuccess()
-      // 刷新当前目录
-      store.dispatch('finder/refreshCurrentPath')
 
       // 显示详细结果
-      if (result.data.errors.length > 0) {
+      if (result.data.errors && result.data.errors.length > 0) {
         ElMessage.warning(`部分文件夹创建失败，成功 ${result.data.summary.success} 个，失败 ${result.data.summary.failed} 个`)
+      } else {
+        ElMessage.success(`成功创建 ${foldersData.length} 个文件夹`)
       }
     } else {
       batchFolderDialogRef.value?.handleBatchCreateError(new Error(result.message))
@@ -563,6 +581,7 @@ const handleBatchCreateFolders = async (foldersData) => {
   } catch (error) {
     console.error('Batch create folders error:', error)
     batchFolderDialogRef.value?.handleBatchCreateError(error)
+    ElMessage.error(`批量创建失败: ${error.message}`)
   }
 }
 
@@ -626,6 +645,19 @@ const stopSidebarResize = () => {
   isResizingSidebar.value = false
   document.removeEventListener('mousemove', handleSidebarResize)
   document.removeEventListener('mouseup', stopSidebarResize)
+}
+
+// 错误处理方法
+const handleRetryLoad = async () => {
+  try {
+    await store.dispatch('finder/refreshCurrentPath')
+  } catch (error) {
+    console.error('Retry load failed:', error)
+  }
+}
+
+const clearError = () => {
+  store.commit('finder/SET_ERROR', null)
 }
 
 // 生命周期

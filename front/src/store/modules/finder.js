@@ -216,15 +216,23 @@ const actions = {
   async loadItems({ commit }, path) {
     commit('SET_LOADING', true)
     commit('SET_ERROR', null)
-    
+
     try {
-      // 模拟API调用
-      const response = await mockAPI.getItems(path)
+      // 调用真实API
+      const response = await realAPI.getItems(path)
       commit('SET_ITEMS', response)
     } catch (error) {
       console.error('Failed to load items:', error)
       commit('SET_ERROR', error.message)
-      commit('SET_ITEMS', [])
+
+      // 如果API失败，尝试使用模拟数据作为后备
+      try {
+        const fallbackResponse = await mockAPI.getItems(path)
+        commit('SET_ITEMS', fallbackResponse)
+        commit('SET_ERROR', '使用离线数据，部分功能可能不可用')
+      } catch (fallbackError) {
+        commit('SET_ITEMS', [])
+      }
     } finally {
       commit('SET_LOADING', false)
     }
@@ -295,10 +303,63 @@ const actions = {
     }
   },
   
+  // 创建文件夹
+  async createFolder({ commit, dispatch, state }, folderData) {
+    try {
+      // 调用API创建文件夹
+      const response = await fetch('/api/manage/folders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(folderData)
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 创建成功后刷新当前目录
+        await dispatch('refreshCurrentPath')
+        return { success: true, data: result.data }
+      } else {
+        throw new Error(result.error || '创建文件夹失败')
+      }
+    } catch (error) {
+      console.error('Create folder failed:', error)
+      throw error
+    }
+  },
+
+  // 批量创建文件夹
+  async batchCreateFolders({ commit, dispatch, state }, { folders, path }) {
+    try {
+      const response = await fetch('/api/manage/folders/batch-create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ folders, path })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 创建成功后刷新当前目录
+        await dispatch('refreshCurrentPath')
+        return { success: true, data: result.data }
+      } else {
+        throw new Error(result.error || '批量创建文件夹失败')
+      }
+    } catch (error) {
+      console.error('Batch create folders failed:', error)
+      throw error
+    }
+  },
+
   // 切换收藏状态
   toggleFavorite({ commit, state }, item) {
     const isFavorite = state.favorites.find(fav => fav.path === item.path)
-    
+
     if (isFavorite) {
       commit('REMOVE_FAVORITE', item.path)
     } else {
@@ -391,12 +452,94 @@ const getters = {
   }
 }
 
-// 模拟API
+// 真实API调用
+const realAPI = {
+  async getItems(path) {
+    try {
+      // 调用文件列表API
+      const response = await fetch(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      // 转换API响应格式为前端需要的格式
+      const items = []
+
+      // 添加文件夹
+      if (data.directories && Array.isArray(data.directories)) {
+        data.directories.forEach(dir => {
+          items.push({
+            name: dir.name || dir,
+            path: path === '/' ? `/${dir.name || dir}` : `${path}/${dir.name || dir}`,
+            type: 'folder',
+            size: 0,
+            modified: Date.now(),
+            created: Date.now()
+          })
+        })
+      }
+
+      // 添加文件
+      if (data.files && Array.isArray(data.files)) {
+        data.files.forEach(file => {
+          const fileName = file.name || file.id || 'unknown'
+          const metadata = file.metadata || {}
+
+          items.push({
+            name: fileName,
+            path: path === '/' ? `/${fileName}` : `${path}/${fileName}`,
+            type: getFileType(fileName),
+            size: metadata.size || 0,
+            modified: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
+            created: metadata.TimeStamp ? new Date(metadata.TimeStamp).getTime() : Date.now(),
+            url: metadata.url || `/api/file/${fileName}`,
+            thumbnail: metadata.thumbnail || metadata.url || `/api/file/${fileName}`,
+            width: metadata.width,
+            height: metadata.height
+          })
+        })
+      }
+
+      return items
+
+    } catch (error) {
+      console.error('Real API call failed:', error)
+      throw error
+    }
+  }
+}
+
+// 辅助函数：根据文件名判断文件类型
+function getFileType(fileName) {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']
+  const videoExts = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm']
+  const audioExts = ['mp3', 'wav', 'flac', 'aac', 'ogg']
+  const documentExts = ['pdf', 'doc', 'docx', 'txt', 'rtf']
+
+  if (imageExts.includes(ext)) return 'image'
+  if (videoExts.includes(ext)) return 'video'
+  if (audioExts.includes(ext)) return 'audio'
+  if (documentExts.includes(ext)) return 'document'
+
+  return 'file'
+}
+
+// 模拟API（作为后备）
 const mockAPI = {
   async getItems(path) {
     // 模拟网络延迟
     await new Promise(resolve => setTimeout(resolve, 300))
-    
+
     // 模拟数据
     const mockData = {
       '/': [
