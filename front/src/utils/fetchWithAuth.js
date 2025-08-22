@@ -3,8 +3,8 @@ import { ElMessage } from 'element-plus'
 import router from '@/router'
 
 export default async function fetchWithAuth(url, options = {}) {
-    // 开发环境下添加 /api 前缀
-    url = process.env.NODE_ENV === 'production' ? url : `/api${url}`;
+    // 统一确保以 /api 开头（避免环境差异导致路径错误）
+    url = url.startsWith('/api') ? url : `/api${url}`;
 
     const credentials = store.getters.credentials || btoa('unset:unset');
 

@@ -1,5 +1,6 @@
 // Finder状态管理模块
 import { fetchWithRetry, isOnline } from '@/utils/networkUtils'
+import fetchWithAuth from '@/utils/fetchWithAuth'
 
 const state = {
   // 当前路径
@@ -232,16 +233,16 @@ const actions = {
         }
 
         // 使用带重试的fetch
-        const response = await fetchWithRetry(`/api/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          timeout: 15000,
-          retryDelay: 1000
-        }, 3)
+        // 使用带鉴权的fetch（管理接口通常需要认证）
+        const response = await fetchWithAuth(`/manage/list?dir=${encodeURIComponent(path)}&count=100`, {
+          method: 'GET'
+        })
 
         console.log('API response status:', response.status)
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
 
         const data = await response.json()
         console.log('API response data:', data)
