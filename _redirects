@@ -1,8 +1,6 @@
 # Cloudflare Pages Redirects Configuration
 # This file handles routing for the macOS Finder-style image bed
 
-# API routes should be handled by Cloudflare Workers functions
-/api/* /functions/api/:splat 200
-
-# All other routes should serve the frontend SPA
+# Let Pages Functions handle /api/* and /file/* automatically (no redirect needed)
+# Keep SPA fallback for non-function routes
 /* /index.html 200
